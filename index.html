@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>RNT Fight · Training prototype</title>
+<title>RNT Fight · Five-round solo</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#8b7bff">
 <meta name="mobile-web-app-capable" content="yes">
@@ -136,7 +136,7 @@
     <button class="tgl" id="tMute">SOUND</button>
     <button class="tgl" id="tNet">NETPLAY</button>
   </div>
-  <div id="touch">
+  <div id="touch" class="on">
     <div class="zone" id="dpad">
       <div class="key" data-k="crouch" style="grid-area:2/2">DOWN</div>
       <div class="key" data-k="left"  style="grid-area:1/1/3/2">◀</div>
@@ -181,7 +181,7 @@
 <script type="module">
 "use strict";
 import { SoloRun, difficulty, createRntClient } from "./solo-client.js";
-import { artReady, fighterArt, drawRosterHead } from "./rnt-art.js";
+import { artReady, fighterArt, drawRosterHead, drawRosterBody, drawRosterPoseHead } from "./rnt-art.js";
 /* Shared modules are the SAME files the server and test-suite import
    (public/shared/*.js), so validation rules can never drift between
    client and backend. */
@@ -396,6 +396,10 @@ function drawCell(g,i,P,head){
    36:{lean:4,crouch:20,fa:[14,-104,32,-108],ba:[-16,-100,-34,-96],lf:[34,-10],lb:[-22,-6],hy:-142}
   }[i];
   if(!S) return;
+  if(head){
+    if(head.headsOnly)drawRosterPoseHead(g,head.id,S);else drawRosterBody(g,head.id,S);
+    return;
+  }
 
   const skin=P.skin, gi=P.gi, trim=P.trim, dark=P.dark;
   const hipY = -58 + S.crouch*0.55, headY = S.hy + S.crouch*0.35;
@@ -1723,7 +1727,7 @@ const RNT = createRntClient({
   begin:()=>{ Audio5.init(); Audio5.resume(); Game.paused=false; Game.cpu=false;
     startMatch(); Sim.init(); acc=0;
     document.getElementById('boot').style.display='none';
-    touchRoot.classList.toggle('on', navigator.maxTouchPoints>0);
+    touchRoot.classList.add('on');
     cachePadRects(); syncToggles(); },
   simulate:(a,b)=>simulate(a,b),
   hash:()=>hashGameState(Game,P1,P2),
@@ -1780,11 +1784,11 @@ function buildBackground(){
   bgCanvas=c;
 }
 
-function drawFighter(g,f){
+function drawFighter(g,f,headsOnly=false){
   const a=fighterArt(f.characterId);
   const palette={skin:a.skin,gi:a.gi,trim:a.color,dark:a.gi,hair:'#201b26',glove:a.color};
   g.save();g.translate(f.x,f.y);g.scale(f.face,1);g.translate(-OX,-OY);
-  drawCell(g,f.cell(),palette,(ctx,x,y)=>drawRosterHead(ctx,f.characterId,x,y));
+  drawCell(g,f.cell(),palette,{id:f.characterId,headsOnly});
   g.restore();
 }
 
@@ -1854,6 +1858,13 @@ function render(){
   const v=g.createRadialGradient(VW/2,VH/2,VH*0.35,VW/2,VH/2,VH*0.85);
   v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(0,0,0,.55)');
   g.fillStyle=v; g.fillRect(0,0,VW,VH);
+  g.restore();
+  // Faces are the final world layer, above both fighters, gloves, particles and flashes.
+  g.save();g.translate(offX,offY);g.scale(viewScale,viewScale);
+  g.beginPath();g.rect(0,0,VW,VH);g.clip();
+  g.translate(VW/2,VH/2);g.scale(Cam.scale,Cam.scale);
+  g.translate(-Cam.x+Cam.shakeX,-Cam.y+Cam.shakeY);
+  for(const f of order)drawFighter(g,f,true);
   g.restore();
 }
 
@@ -1964,7 +1975,7 @@ document.getElementById('start').addEventListener('click',()=>{
   document.getElementById('selectedMatch').textContent=P1.name+' VS '+P2.name;
   Audio5.init(); Audio5.resume();
   document.getElementById('boot').style.display='none';
-  if('ontouchstart' in window) touchRoot.classList.add('on');
+  touchRoot.classList.add('on');
   cachePadRects();
   syncToggles();
   startMatch();
