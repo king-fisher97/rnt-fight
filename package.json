@@ -1,0 +1,1 @@
+{"name":"rnt-fight-commands","private":true,"type":"module","scripts":{"start":"node bot-server.mjs","test":"node --test bot-server.test.mjs"},"engines":{"node":">=22"}}
