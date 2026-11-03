@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "selectionArt": "rnt-roster-original.jpg",
+  "selectionArtSha256": "575b3719f270bf40b18f5adda1f8a6953ebf309007616926afd76065a287324f",
+  "fighters": [
+    {
+      "id": "rnt",
+      "name": "RNT",
+      "color": "#ef3333",
+      "animationAtlas": null
+    },
+    {
+      "id": "tristan",
+      "name": "Tristan",
+      "color": "#2788ff",
+      "animationAtlas": null
+    },
+    {
+      "id": "andre",
+      "name": "Andre",
+      "color": "#ff7924",
+      "animationAtlas": null
+    },
+    {
+      "id": "marcel",
+      "name": "Marcel",
+      "color": "#27dc79",
+      "animationAtlas": null
+    },
+    {
+      "id": "blaise",
+      "name": "Blaise",
+      "color": "#b53cff",
+      "animationAtlas": null
+    }
+  ],
+  "combatProfile": "fighter.neon.json",
+  "artStatus": "Original face pixels on articulated canvas bodies; 37 combat pose cells"
+}
