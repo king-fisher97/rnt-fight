@@ -2,6 +2,14 @@ import http from 'node:http';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 
+export const GAME_SHORT_NAME = 'RNTfighter';
+export const GAME_URL = 'https://king-fisher97.github.io/rnt-fight/';
+
+export function callbackFor(query) {
+  if (!query?.id || query.game_short_name !== GAME_SHORT_NAME) return null;
+  return { callback_query_id: query.id, url: GAME_URL, cache_time: 0 };
+}
+
 export function replyFor(message) {
   if (!message?.chat?.id || message.from?.is_bot || typeof message.text !== 'string') return null;
   const command = /^\/(rntfight|fight|start)(?:@([a-z0-9_]+))?(?:\s|$)/i.exec(message.text);
@@ -9,8 +17,7 @@ export function replyFor(message) {
   return {
     chat_id: message.chat.id,
     ...(message.is_topic_message && message.message_thread_id ? { message_thread_id: message.message_thread_id } : {}),
-    text: '🥊 RNT FIGHT\nChoose your fighter. Beat five CPU opponents.\nTap below to play!',
-    reply_markup: { inline_keyboard: [[{ text: '🥊 Play RNT Fight', url: 'https://t.me/RNTFightBot?startapp' }]] }
+    game_short_name: GAME_SHORT_NAME
   };
 }
 
@@ -48,7 +55,10 @@ export async function start() {
         if (!pending.has(update.update_id)) {
           pending.set(update.update_id, (async () => {
             const reply = replyFor(update.message);
-            if (reply) await api('sendMessage', reply);
+            if (reply) await api('sendGame', reply);
+            const callback = callbackFor(update.callback_query);
+            if (callback) await api('answerCallbackQuery', callback);
+            else if (update.callback_query?.id) await api('answerCallbackQuery', { callback_query_id: update.callback_query.id, text: 'This game is unavailable.' });
             completed.set(update.update_id, now);
             if (completed.size > 10000) completed.delete(completed.keys().next().value);
           })());
@@ -60,7 +70,7 @@ export async function start() {
   });
   await new Promise(resolve => server.listen(Number(process.env.PORT || 10000), '0.0.0.0', resolve));
   await api('setMyCommands', { commands: [{ command: 'rntfight', description: 'Play RNT Fight — five CPU rounds' }, { command: 'fight', description: 'Play RNT Fight' }] });
-  await api('setWebhook', { url: `${origin.replace(/\/$/, '')}/telegram`, secret_token: secret, allowed_updates: ['message'], max_connections: 1 });
+  await api('setWebhook', { url: `${origin.replace(/\/$/, '')}/telegram`, secret_token: secret, allowed_updates: ['message', 'callback_query'], max_connections: 1 });
   ready = true;
   console.log('RNT Fight command service ready');
   return server;
