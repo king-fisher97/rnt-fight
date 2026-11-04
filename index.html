@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-192.png" type="image/png">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<link rel="stylesheet" href="rnt.css?v=20261104-menu8">
+<link rel="stylesheet" href="rnt.css?v=20261104-menu9">
 <style>
   :root{ --p1:#38f0d0; --p2:#ff5a7a; }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -164,7 +164,7 @@
       <p>On your phone: use the on-screen movement and attack buttons.</p>
     </section>
     <div class="mode-label">SOLO / FIVE-ROUND RUN</div>
-    <img class="roster-art" src="rnt-roster-original.jpg" alt="Original fighter artwork: RNT, Tristan, Andre, Marcel, and Blaise, left to right">
+    <canvas id="rosterLineup" class="roster-art" width="1400" height="510" role="img" aria-label="All seven fighters: RNT, Tristan, Andre, Marcel, Blaise, Bailey, and Alex Jones"></canvas>
     <div class="roster-buttons"><button data-fighter="rnt" aria-pressed="false">RNT</button><button data-fighter="tristan" aria-pressed="false">Tristan</button><button data-fighter="andre" aria-pressed="false">Andre</button><button data-fighter="marcel" aria-pressed="false">Marcel</button><button data-fighter="blaise" aria-pressed="false">Blaise</button></div>
     <p>Choose your fighter. Your original artwork appears in the arena.</p>
     <label for="character">Roster slot</label>
@@ -181,7 +181,7 @@
 </div>
 <script type="module">
 "use strict";
-import { SoloRun, difficulty, createRntClient } from "./solo-client.js";
+import { SoloRun, difficulty, createRntClient } from "./solo-client.js?v=20261104-menu9";
 import { artReady, fighterArt, drawRosterHead, drawRosterBody, drawRosterPoseHead } from "./rnt-art.js?v=20261104-roster7";
 /* Shared modules are the SAME files the server and test-suite import
    (public/shared/*.js), so validation rules can never drift between

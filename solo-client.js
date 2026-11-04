@@ -28,7 +28,7 @@ export class SoloRun {
 }
 export function createRntClient(){
  return {active:false,running:false,slot:0,recentHashes:{},step(){},async init(){
-  const {drawRosterHead}=await import('./rnt-art.js?v=20261104-roster7');
+  const {drawRosterHead,drawRosterBody,drawRosterPoseHead}=await import('./rnt-art.js?v=20261104-roster7');
   const tg=window.Telegram?.WebApp;
   tg?.ready();tg?.expand();
   if(tg?.isVersionAtLeast?.('7.7'))tg.disableVerticalSwipes();
@@ -38,12 +38,22 @@ export function createRntClient(){
   updateSafe();tg?.onEvent('contentSafeAreaChanged',updateSafe);
   const res=await fetch('./roster.json');if(!res.ok)throw new Error('Could not load roster');
   const registry=await res.json(),select=document.getElementById('character'),buttons=document.querySelector('.roster-buttons');
+  const lineup=document.getElementById('rosterLineup'),g=lineup.getContext('2d');
+  const pose={lean:0,crouch:0,fa:[16,-104,30,-96],ba:[-14,-102,-30,-92],lf:[16,-10],lb:[-18,-8],hy:-152};
+  registry.fighters.forEach((fighter,i)=>{const x=i*200;g.save();g.beginPath();g.rect(x,0,200,510);g.clip();
+   const gradient=g.createLinearGradient(x,0,x+200,510);gradient.addColorStop(0,fighter.color);gradient.addColorStop(1,'#100c17');g.fillStyle=gradient;g.fillRect(x,0,200,510);
+   g.strokeStyle='#ffffff22';g.lineWidth=3;for(let k=-3;k<5;k++){g.beginPath();g.moveTo(x+k*70,0);g.lineTo(x+k*70+180,510);g.stroke();}
+   g.translate(x+100,440);g.scale(1.7,1.7);drawRosterBody(g,fighter.id,pose);drawRosterPoseHead(g,fighter.id,pose);g.restore();
+   g.fillStyle='#fff';g.textAlign='center';g.font='bold 26px sans-serif';g.fillText(fighter.name.toUpperCase(),x+100,486,185);
+   g.fillStyle='#090711';g.fillRect(x+198,0,2,510);
+  });g.fillStyle='#090711d9';g.fillRect(0,0,1400,64);g.fillStyle='#ffe6b7';g.font='bold italic 38px sans-serif';g.textAlign='center';g.fillText('SELECT YOUR FIGHTER',700,46);
   select.replaceChildren();buttons.replaceChildren();
   for(const fighter of registry.fighters){
    const o=document.createElement('option');o.value=fighter.id;o.textContent=fighter.name;select.append(o);
    const b=document.createElement('button');b.dataset.fighter=fighter.id;b.setAttribute('aria-label',fighter.name);
    const portrait=document.createElement('canvas');portrait.width=100;portrait.height=90;portrait.setAttribute('aria-hidden','true');drawRosterHead(portrait.getContext('2d'),fighter.id,50,43);
-   const name=document.createElement('span');name.textContent=fighter.name;b.append(portrait,name);
+   const face=document.createElement('img');face.src=portrait.toDataURL('image/png');face.alt='';face.className='face-png';face.width=100;face.height=90;
+   const name=document.createElement('span');name.textContent=fighter.name;b.append(face,name);
    b.onclick=()=>{select.value=fighter.id;select.dispatchEvent(new Event('change'));};buttons.append(b);
   }
   select.onchange=()=>document.querySelectorAll('[data-fighter]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.fighter===select.value)));
