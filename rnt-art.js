@@ -1,10 +1,10 @@
 // Original face pixels only; bodies are animated canvas geometry.
 const figures = {
- rnt:{name:'RNT',color:'#ef3333',skin:'#b77750',gi:'#eee5d5',head:[119,0,119,166],outline:[[.12,0],[.79,0],[.94,.13],[1,.5],[.85,.85],[.6,1],[.25,.92],[0,.6],[0,.2]]},
+ rnt:{name:'RNT',color:'#ef3333',skin:'#b77750',gi:'#eee5d5',head:[119,0,119,166],outline:[[.34,0],[.79,0],[.94,.13],[1,.5],[.85,.85],[.6,1],[.25,.92],[.06,.6],[.16,.2]]},
  tristan:{name:'Tristan',color:'#2788ff',skin:'#8f5c3d',gi:'#2466bb',head:[333,43,120,186],outline:[[.2,0],[.7,0],[.94,.1],[1,.4],[.9,.75],[.65,1],[.28,.96],[.02,.65],[0,.25]]},
- andre:{name:'Andre',color:'#ff7924',skin:'#bd815a',gi:'#c9471d',head:[565,51,207,179],outline:[[.18,.06],[.48,0],[.8,.07],[.97,.3],[1,.55],[.81,.72],[.66,.95],[.4,1],[.23,.8],[.06,.65],[0,.34]]},
- marcel:{name:'Marcel',color:'#27dc79',skin:'#e2b693',gi:'#e4e9dc',head:[840,54,107,150],outline:[[.28,.03],[.66,0],[.94,.15],[1,.55],[.83,.8],[.65,1],[.33,.98],[.06,.76],[0,.3]]},
- blaise:{name:'Blaise',color:'#b53cff',skin:'#c78e69',gi:'#372648',head:[1083,28,132,162],outline:[[.21,.06],[.56,0],[.83,.12],[.99,.3],[.94,.67],[.72,.94],[.43,1],[.16,.82],[0,.49],[.02,.22]]}
+ andre:{name:'Andre',color:'#ff7924',skin:'#bd815a',gi:'#c9471d',head:[565,51,207,179],outline:[[.18,.06],[.48,0],[.8,.07],[.97,.3],[1,.55],[.81,.72],[.66,.95],[.4,1],[.26,.78],[.13,.62],[0,.34]]},
+ marcel:{name:'Marcel',color:'#27dc79',skin:'#e2b693',gi:'#e4e9dc',head:[840,54,107,150],outline:[[.28,.03],[.66,0],[.94,.15],[1,.55],[.83,.8],[.65,1],[.4,.94],[.21,.72],[.04,.3]]},
+ blaise:{name:'Blaise',color:'#b53cff',skin:'#c78e69',gi:'#372648',head:[1083,28,132,162],outline:[[.21,.06],[.56,0],[.83,.12],[.94,.3],[.88,.67],[.69,.85],[.43,.89],[.28,.76],[.08,.49],[.02,.22]]}
 };
 const poster=new Image();poster.src='rnt-roster-original.jpg';
 const bodies=new Image();bodies.src='detailed-bodies-v1.png';
@@ -18,7 +18,13 @@ export function drawRosterHead(g,id,x,y){
  const a=fighterArt(id),[sx,sy,sw,sh]=a.head;
  const h=72,w=h*sw/sh;
  g.save();g.translate(x-w/2,y-39);
- g.beginPath();a.outline.forEach(([u,v],i)=>i?g.lineTo(u*w,v*h):g.moveTo(u*w,v*h));g.closePath();g.clip();
+ // Inset the mask into the original photo to exclude the poster's colored rim.
+ // Rounded joins avoid the angular cutout corners without adding an outline.
+ const edge=a.outline.map(([u,v])=>[(.5+(u-.5)*.90)*w,(.5+(v-.5)*.94)*h]);
+ const last=edge[edge.length-1];
+ g.beginPath();g.moveTo((last[0]+edge[0][0])/2,(last[1]+edge[0][1])/2);
+ edge.forEach(([px,py],i)=>{const next=edge[(i+1)%edge.length];g.quadraticCurveTo(px,py,(px+next[0])/2,(py+next[1])/2);});
+ g.closePath();g.clip();
  g.drawImage(poster,sx,sy,sw,sh,0,0,w,h);g.restore();
 }
 
