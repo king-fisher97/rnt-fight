@@ -29,6 +29,7 @@
 #boot .roster-art{max-height:29vh}
 @media(max-width:650px){.control-grid{grid-template-columns:repeat(3,1fr);gap:12px}.home-controls{padding:12px 8px}}
 #boot>*{flex-shrink:0}
+#boot .creator-credit{font-size:11px;font-weight:400;letter-spacing:.02em;color:#a99aa3;text-align:center;margin-top:-5px;line-height:1.4}
 
 /* Solo release */
 #tCpu[hidden],#restartRun[hidden]{display:none!important}

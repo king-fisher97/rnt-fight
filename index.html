@@ -170,6 +170,7 @@
     <label for="character">Roster slot</label>
     <select id="character" aria-label="Roster slot"></select>
     <div class="row"><button class="btn" id="start">START FIVE-ROUND RUN</button></div>
+    <div class="creator-credit">Created by AC</div>
     <p>Beat five CPU opponents. Each round gets tougher. A loss or draw ends your run.</p>
     <p>Each win: 1,000 points + health × 10 + seconds remaining × 5.</p>
     <p id="lobbyStatus" role="status">Preparing arena…</p>
@@ -181,7 +182,7 @@
 <script type="module">
 "use strict";
 import { SoloRun, difficulty, createRntClient } from "./solo-client.js";
-import { artReady, fighterArt, drawRosterHead, drawRosterBody, drawRosterPoseHead } from "./rnt-art.js?v=20261103-art2";
+import { artReady, fighterArt, drawRosterHead, drawRosterBody, drawRosterPoseHead } from "./rnt-art.js?v=20261104-release3";
 /* Shared modules are the SAME files the server and test-suite import
    (public/shared/*.js), so validation rules can never drift between
    client and backend. */
@@ -525,12 +526,28 @@ function packAtlas(){
 const Audio5 = (()=>{
   let ac=null, master=null, sfxBus=null, musBus=null, buffers={}, ready=false, muted=false;
   let musSrc=null;
+  const victoryTrack=new Audio('victory-track.m4a');
+  victoryTrack.preload='auto';
+  let victoryTimer=null, victoryGain=null;
+  function stopVictory(){
+    clearTimeout(victoryTimer);
+    victoryTrack.pause(); victoryTrack.currentTime=0;
+  }
+  function victory(){
+    if(!ready) return;
+    stopVictory(); music(false);
+    victoryTrack.play().catch(()=>{});
+    victoryTimer=setTimeout(stopVictory,4000);
+  }
   const gainPool=[]; let poolMade=0;
 
   function init(){
     if(ac) return;
     ac = new (window.AudioContext||window.webkitAudioContext)();
     master = ac.createGain(); master.gain.value=0.9; master.connect(ac.destination);
+    victoryGain=ac.createGain(); victoryGain.gain.value=0.18;
+    ac.createMediaElementSource(victoryTrack).connect(victoryGain);
+    victoryGain.connect(master);
     sfxBus = ac.createGain(); sfxBus.gain.value=0.85; sfxBus.connect(master);
     musBus = ac.createGain(); musBus.gain.value=0.34; musBus.connect(master);
     render();
@@ -656,7 +673,7 @@ const Audio5 = (()=>{
     g.linearRampToValueAtTime(0.34,ac.currentTime+(t||1.2));
   }
   return {
-    init, play, music, duck,
+    init, play, music, duck, victory, stopVictory,
     get muted(){return muted;},
     set muted(v){ muted=v; if(master) master.gain.value = v?0:0.9; },
     get poolInfo(){ return gainPool.length+'/'+poolMade; },
@@ -1514,6 +1531,7 @@ const UI = {
 };
 
 function startRound(){
+  Audio5.stopVictory(); Audio5.music(true);
   Game.round=Run.round;
   const opponent=ROSTER_IDS[(ROSTER_IDS.indexOf(P1.characterId)+Run.round)%ROSTER_IDS.length];
   P2.characterId=opponent;P2.name=fighterArt(opponent).name;
@@ -1564,20 +1582,21 @@ function updateFlow(){
       else {P1.rounds++;P2.rounds++;}
       UI.sync();
       const result=Run.resolve(w==='p1',P1.hp,Game.timer);
+      if(w==='p1') Audio5.victory();
       if(result.finished){
         Game.phase='matchEnd';Game.phaseT=0;
-        UI.show(result.complete?'RUN COMPLETE':'RUN OVER','SCORE '+Run.score+' · BEST '+Run.best+' · '+Run.wins+'/5 WINS');
+        UI.show(result.complete?'WINNER — RUN COMPLETE':'RUN OVER','SCORE '+Run.score+' · BEST '+Run.best+' · '+Run.wins+'/5 WINS');
         document.getElementById('restartRun').hidden=false;
         document.getElementById('selectedMatch').textContent='SCORE '+Run.score+' · BEST '+Run.best+' · '+Run.wins+'/5 WINS';
         Audio5.duck(0.1,2.5);
-      }else{Game.phase='roundEnd';Game.phaseT=0;UI.show('ROUND WON','+'+result.points+' POINTS · NEXT: ROUND '+Run.round);}
+      }else{Game.phase='roundEnd';Game.phaseT=0;UI.show('WINNER','+'+result.points+' POINTS · NEXT: ROUND '+Run.round);}
 
     }
     return;
   }
   if(Game.phase==='roundEnd'){
     Game.slowmo = Math.max(0, Game.slowmo-0.03);
-    if(T===75){ startRound(); }
+    if(T===240){ startRound(); }
     return;
   }
 }
@@ -1740,47 +1759,11 @@ const Net = {
 
 /* ============================ RENDERING ============================ */
 let bgCanvas=null, bgFar=null;
+const arenaImage=new Image();arenaImage.src='tate-arena-v3.png';
 function buildBackground(){
   const c=document.createElement('canvas'); c.width=VW; c.height=VH;
   const g=c.getContext('2d');
-  const sky=g.createLinearGradient(0,0,0,FLOOR);
-  sky.addColorStop(0,'#170a28'); sky.addColorStop(.55,'#3a1250'); sky.addColorStop(1,'#7a1f5c');
-  g.fillStyle=sky; g.fillRect(0,0,VW,FLOOR);
-  const sun=g.createLinearGradient(0,120,0,330);
-  sun.addColorStop(0,'#ffd23f'); sun.addColorStop(1,'#ff2f7a');
-  g.fillStyle=sun; g.beginPath(); g.arc(VW/2,300,150,Math.PI,0); g.fill();
-  g.globalCompositeOperation='destination-out';
-  for(let i=0;i<9;i++) g.fillRect(VW/2-160,190+i*15,320,Math.max(1,i*0.9));
-  g.globalCompositeOperation='source-over';
-  g.fillStyle='#1a0b2e';
-  let x=0;
-  while(x<VW){ const w=vrand(34,80), h=vrand(60,210);
-    g.fillRect(x,FLOOR-h,w,h);
-    g.fillStyle='rgba(120,220,255,.5)';
-    for(let wy=FLOOR-h+10; wy<FLOOR-14; wy+=18)
-      for(let wx=x+7; wx<x+w-9; wx+=15) if(Math.random()<0.35) g.fillRect(wx,wy,5,7);
-    g.fillStyle='#1a0b2e';
-    x+=w+vrand(6,20);
-  }
-  g.fillStyle='#120722'; g.fillRect(0,FLOOR-58,VW,58);
-  for(let i=0;i<120;i++){
-    g.fillStyle='hsla('+vrand(240,320)+',40%,'+vrand(18,42)+'%,1)';
-    g.beginPath(); g.arc(vrand(0,VW),FLOOR-vrand(10,50),vrand(4,8),0,6.2832); g.fill();
-  }
-  const fl=g.createLinearGradient(0,FLOOR,0,VH);
-  fl.addColorStop(0,'#2a1140'); fl.addColorStop(1,'#0d0518');
-  g.fillStyle=fl; g.fillRect(0,FLOOR,VW,VH-FLOOR);
-  g.strokeStyle='rgba(255,80,160,.35)'; g.lineWidth=2;
-  for(let i=-14;i<=14;i++){
-    g.beginPath(); g.moveTo(VW/2+i*24,FLOOR); g.lineTo(VW/2+i*260,VH); g.stroke();
-  }
-  for(let i=1;i<8;i++){ const yy=FLOOR+Math.pow(i/8,2.2)*(VH-FLOOR);
-    g.beginPath(); g.moveTo(0,yy); g.lineTo(VW,yy); g.stroke(); }
-  g.strokeStyle='#ff5ab0'; g.lineWidth=3;
-  g.beginPath(); g.moveTo(0,FLOOR); g.lineTo(VW,FLOOR); g.stroke();
-  // corner markers so the camera bounds read clearly
-  g.fillStyle='rgba(255,90,176,.25)';
-  g.fillRect(WALL_L-26,FLOOR-260,4,260); g.fillRect(WALL_R+22,FLOOR-260,4,260);
+  g.drawImage(arenaImage,0,0,VW,VH);
   bgCanvas=c;
 }
 
@@ -2010,7 +1993,7 @@ async function boot(){
     applyConfig(loader.assets.fighter, loader.assets.rules, loader.assets.stage);
     resize();
 
-    await artReady();
+    await Promise.all([artReady(),arenaImage.decode()]);
     await loader.runStep('atlas.p1', ()=>{ packAtlas(); return true; });
     await loader.runStep('atlas.p2', ()=>true);          // both palettes in one atlas
     await loader.runStep('stage.bg', ()=>{ buildBackground(); return true; });
