@@ -28,6 +28,7 @@ export class SoloRun {
 }
 export function createRntClient(){
  return {active:false,running:false,slot:0,recentHashes:{},step(){},async init(){
+  const {drawRosterHead}=await import('./rnt-art.js?v=20261104-roster7');
   const tg=window.Telegram?.WebApp;
   tg?.ready();tg?.expand();
   if(tg?.isVersionAtLeast?.('7.7'))tg.disableVerticalSwipes();
@@ -40,7 +41,9 @@ export function createRntClient(){
   select.replaceChildren();buttons.replaceChildren();
   for(const fighter of registry.fighters){
    const o=document.createElement('option');o.value=fighter.id;o.textContent=fighter.name;select.append(o);
-   const b=document.createElement('button');b.dataset.fighter=fighter.id;b.textContent=fighter.name;
+   const b=document.createElement('button');b.dataset.fighter=fighter.id;b.setAttribute('aria-label',fighter.name);
+   const portrait=document.createElement('canvas');portrait.width=100;portrait.height=90;portrait.setAttribute('aria-hidden','true');drawRosterHead(portrait.getContext('2d'),fighter.id,50,43);
+   const name=document.createElement('span');name.textContent=fighter.name;b.append(portrait,name);
    b.onclick=()=>{select.value=fighter.id;select.dispatchEvent(new Event('change'));};buttons.append(b);
   }
   select.onchange=()=>document.querySelectorAll('[data-fighter]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.fighter===select.value)));

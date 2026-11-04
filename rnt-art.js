@@ -6,12 +6,19 @@ const figures = {
  marcel:{name:'Marcel',color:'#27dc79',skin:'#e2b693',gi:'#e4e9dc',head:[840,54,107,150],outline:[[.28,.03],[.66,0],[.94,.15],[1,.55],[.83,.8],[.65,1],[.4,.94],[.21,.72],[.04,.3]]},
  blaise:{name:'Blaise',color:'#b53cff',skin:'#c78e69',gi:'#372648',head:[1083,28,132,162],outline:[[.21,.06],[.56,0],[.83,.12],[.94,.3],[.88,.67],[.69,.85],[.43,.89],[.28,.76],[.08,.49],[.02,.22]]}
 };
+figures.bailey={name:'Bailey',color:'#e6b442',skin:'#b77950',gi:'#ba9337',head:[40,22,280,399],outline:[[.45,0],[.7,.04],[.91,.19],[.98,.43],[.98,.57],[.91,.66],[.87,.86],[.69,.98],[.45,1],[.23,.91],[.15,.73],[.02,.65],[0,.5],[.06,.44],[.06,.23],[.21,.07]]};
+figures.alexjones={name:'Alex Jones',color:'#b6bdc6',skin:'#bb806e',gi:'#40434b',head:[40,18,76,111],outline:[[.27,.02],[.56,0],[.8,.1],[.92,.29],[.97,.48],[.94,.64],[.83,.85],[.63,.98],[.4,1],[.2,.87],[.07,.65],[0,.45],[.05,.27],[.13,.12]]};
+const portraits={};
+for(const [id,url] of [['bailey','bailey-original.jpg'],['alexjones','alex-jones-original.png']]){const image=new Image();image.src=url;portraits[id]=image;}
 const poster=new Image();poster.src='rnt-roster-original.jpg';
 const bodies=new Image();bodies.src='detailed-bodies-v1.png';
 const bodyTiles=[];
-export const artReady=async()=>{await Promise.all([poster.decode(),bodies.decode()]);
+export const artReady=async()=>{await Promise.all([poster.decode(),bodies.decode(),...Object.values(portraits).map(p=>p.decode())]);
  for(let i=0;i<5;i++){const c=document.createElement('canvas');c.width=434;c.height=620;
  c.getContext('2d').drawImage(bodies,i*434,94,434,620,0,0,434,620);bodyTiles.push(c);}
+ // Outfit variations tint only the colored fabric, preserving skin and detail.
+ for(const [base,mode] of [[1,'gold'],[4,'charcoal']]){const c=document.createElement('canvas');c.width=434;c.height=620;const g=c.getContext('2d');g.drawImage(bodyTiles[base],0,0);const im=g.getImageData(0,0,434,620),d=im.data;
+ for(let i=0;i<d.length;i+=4){const r=d[i],green=d[i+1],b=d[i+2];if(b>green*1.15&&b>r*.9){const light=Math.max(r,green,b);if(mode==='gold'){d[i]=light;d[i+1]=light*.73;d[i+2]=light*.22;}else{d[i]=light*.65;d[i+1]=light*.68;d[i+2]=light*.73;}}}g.putImageData(im,0,0);bodyTiles.push(c);}
 };
 export function fighterArt(id){return figures[id]||figures.rnt;}
 export function drawRosterHead(g,id,x,y){
@@ -25,11 +32,11 @@ export function drawRosterHead(g,id,x,y){
  g.beginPath();g.moveTo((last[0]+edge[0][0])/2,(last[1]+edge[0][1])/2);
  edge.forEach(([px,py],i)=>{const next=edge[(i+1)%edge.length];g.quadraticCurveTo(px,py,(px+next[0])/2,(py+next[1])/2);});
  g.closePath();g.clip();
- g.drawImage(poster,sx,sy,sw,sh,0,0,w,h);g.restore();
+ g.drawImage(portraits[id]||poster,sx,sy,sw,sh,0,0,w,h);g.restore();
 }
 
 // Continuous textured mesh follows the existing combat poses; original heads remain separate.
-const ids=['rnt','tristan','andre','marcel','blaise'];
+const ids=['rnt','tristan','andre','marcel','blaise','bailey','alexjones'];
 function triangle(g,img,s,d){
  const [a,b,c]=s,[p,q,r]=d,ux=b[0]-a[0],uy=b[1]-a[1],vx=c[0]-a[0],vy=c[1]-a[1],det=ux*vy-uy*vx;
  const A=((q[0]-p[0])*vy-(r[0]-p[0])*uy)/det,B=((q[1]-p[1])*vy-(r[1]-p[1])*uy)/det;

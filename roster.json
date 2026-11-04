@@ -32,6 +32,18 @@
       "name": "Blaise",
       "color": "#b53cff",
       "animationAtlas": null
+    },
+    {
+      "id": "bailey",
+      "name": "Bailey",
+      "color": "#e6b442",
+      "animationAtlas": null
+    },
+    {
+      "id": "alexjones",
+      "name": "Alex Jones",
+      "color": "#b6bdc6",
+      "animationAtlas": null
     }
   ],
   "combatProfile": "fighter.neon.json",

@@ -182,7 +182,7 @@
 <script type="module">
 "use strict";
 import { SoloRun, difficulty, createRntClient } from "./solo-client.js";
-import { artReady, fighterArt, drawRosterHead, drawRosterBody, drawRosterPoseHead } from "./rnt-art.js?v=20261104-heads4";
+import { artReady, fighterArt, drawRosterHead, drawRosterBody, drawRosterPoseHead } from "./rnt-art.js?v=20261104-roster7";
 /* Shared modules are the SAME files the server and test-suite import
    (public/shared/*.js), so validation rules can never drift between
    client and backend. */
@@ -1477,7 +1477,7 @@ const Game = {
 };
 
 const Run = new SoloRun();
-const ROSTER_IDS=['rnt','tristan','andre','marcel','blaise'];
+const ROSTER_IDS=['rnt','tristan','andre','marcel','blaise','bailey','alexjones'];
 const P1 = new Fighter(0, 330, PAL.p1, 'PLAYER 1');
 const P2 = new Fighter(1, 630, PAL.p2, 'CPU');
 const FIGHTERS=[P1,P2];
@@ -1533,7 +1533,7 @@ const UI = {
 function startRound(){
   Audio5.stopVictory(); Audio5.music(true);
   Game.round=Run.round;
-  const opponent=ROSTER_IDS[(ROSTER_IDS.indexOf(P1.characterId)+Run.round)%ROSTER_IDS.length];
+  const opponent=Game.opponents[Run.round-1];
   P2.characterId=opponent;P2.name=fighterArt(opponent).name;
   document.getElementById('selectedMatch').textContent='ROUND '+Run.round+'/5 · '+P1.name+' VS '+P2.name+' · SCORE '+Run.score+' · BEST '+Run.best;
   P1.reset(false); P2.reset(false);
@@ -1546,6 +1546,8 @@ function startRound(){
 }
 function startMatch(){
   Run.start();Game.cpu=true;Game.paused=false;Game.winner=null;
+  Game.opponents=ROSTER_IDS.filter(id=>id!==P1.characterId);
+  for(let i=Game.opponents.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[Game.opponents[i],Game.opponents[j]]=[Game.opponents[j],Game.opponents[i]];}
   document.getElementById('restartRun').hidden=true;
   P1.rounds=0; P2.rounds=0; Game.round=1; Game.frame=0;
   Rng.seed(0x1234abc);
@@ -1953,7 +1955,7 @@ document.getElementById('restartRun').onclick=rematchIfDone;
 document.getElementById('start').addEventListener('click',()=>{
   const selected=document.getElementById('character').value;
   P1.characterId=selected;P1.name=fighterArt(selected).name;
-  const ids=['rnt','tristan','andre','marcel','blaise'];
+  const ids=['rnt','tristan','andre','marcel','blaise','bailey','alexjones'];
   P2.characterId=ids[(ids.indexOf(selected)+1)%ids.length];P2.name=fighterArt(P2.characterId).name;
   document.getElementById('selectedMatch').textContent=P1.name+' VS '+P2.name;
   Audio5.init(); Audio5.resume();
