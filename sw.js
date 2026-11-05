@@ -9,7 +9,7 @@
  *     being pinned forever by an immutable cache.
  *   - never cache /ws or /health — signaling must always hit the network.
  */
-const VERSION = 'neon-fist-v1.0.0';
+const VERSION = 'neon-fist-v1.0.1-scorecard';
 const SHELL = `${VERSION}-shell`;
 const DATA = `${VERSION}-data`;
 

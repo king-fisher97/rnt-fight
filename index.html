@@ -184,6 +184,7 @@
 "use strict";
 import { SoloRun, difficulty, createRntClient } from "./solo-client.js?v=20261104-nine10";
 import { artReady, fighterArt, drawRosterHead, drawRosterBody, drawRosterPoseHead } from "./rnt-art.js?v=20261104-nine10";
+import { shareScoreCard } from './score-card.js?v=20261105-scorecard1';
 /* Shared modules are the SAME files the server and test-suite import
    (public/shared/*.js), so validation rules can never drift between
    client and backend. */
@@ -1957,14 +1958,24 @@ function rematchIfDone(){
 window.addEventListener('keydown',e=>{ if(e.code==='Enter') rematchIfDone(); });
 cv.addEventListener('pointerdown',()=>Audio5.resume());
 document.getElementById('restartRun').onclick=rematchIfDone;
-document.getElementById('shareScore').onclick=()=>{
-  const message=`RNT FIGHT — I scored ${Run.score.toLocaleString()} points with ${P1.name}! ${Run.wins}/5 wins. Think you can beat that?`;
-  const gameUrl=location.origin+location.pathname;
-  const shareUrl='https://t.me/share/url?url='+encodeURIComponent(gameUrl)+'&text='+encodeURIComponent(message);
-  const tg=window.Telegram?.WebApp;
-  if(tg?.openTelegramLink) tg.openTelegramLink(shareUrl);
-  else window.open(shareUrl,'_blank','noopener');
+document.getElementById('shareScore').onclick=async()=>{
+  const button=document.getElementById('shareScore');
+  if(button.disabled)return;
+  button.disabled=true;
+  try{
+    await shareScoreCard({
+      fighterId:P1.characterId,
+      fighterName:P1.name,
+      score:Run.score,
+      wins:Run.wins
+    });
+  }catch(error){
+    alert('Scorecard could not be created: '+error.message);
+  }finally{
+    button.disabled=false;
+  }
 };
+
 
 document.getElementById('start').addEventListener('click',()=>{
   const selected=document.getElementById('character').value;
