@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "selectionArt": "assets/rnt-roster-original.jpg",
+  "selectionArtSha256": "575b3719f270bf40b18f5adda1f8a6953ebf309007616926afd76065a287324f",
+  "fighters": [
+    {
+      "id": "rnt",
+      "name": "RNT",
+      "color": "#ef3333",
+      "animationAtlas": null
+    },
+    {
+      "id": "tristan",
+      "name": "Tristan",
+      "color": "#2788ff",
+      "animationAtlas": null
+    },
+    {
+      "id": "andre",
+      "name": "Andre",
+      "color": "#ff7924",
+      "animationAtlas": null
+    },
+    {
+      "id": "marcel",
+      "name": "Marcel",
+      "color": "#27dc79",
+      "animationAtlas": null
+    },
+    {
+      "id": "blaise",
+      "name": "Blaise",
+      "color": "#b53cff",
+      "animationAtlas": null
+    },
+    {
+      "id": "bailey",
+      "name": "Bailey",
+      "color": "#e6b442",
+      "animationAtlas": null
+    },
+    {
+      "id": "alexjones",
+      "name": "Alex Jones",
+      "color": "#b6bdc6",
+      "animationAtlas": null
+    },
+    {
+      "id": "blackjoseph",
+      "name": "Black Joseph",
+      "color": "#20bba6",
+      "animationAtlas": null
+    },
+    {
+      "id": "blackblaise",
+      "name": "Black Blaise",
+      "color": "#8555c8",
+      "animationAtlas": null
+    }
+  ],
+  "combatProfile": "fighter.neon.json",
+  "artStatus": "Original face pixels on articulated canvas bodies; 37 combat pose cells"
+}

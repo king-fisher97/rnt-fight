@@ -8,18 +8,27 @@ const figures = {
 };
 figures.bailey={name:'Bailey',color:'#e6b442',skin:'#b77950',gi:'#ba9337',head:[40,22,280,399],outline:[[.45,0],[.7,.04],[.91,.19],[.98,.43],[.98,.57],[.91,.66],[.87,.86],[.69,.98],[.45,1],[.23,.91],[.15,.73],[.02,.65],[0,.5],[.06,.44],[.06,.23],[.21,.07]]};
 figures.alexjones={name:'Alex Jones',color:'#b6bdc6',skin:'#bb806e',gi:'#40434b',head:[40,18,76,111],outline:[[.27,.02],[.56,0],[.8,.1],[.92,.29],[.97,.48],[.94,.64],[.83,.85],[.63,.98],[.4,1],[.2,.87],[.07,.65],[0,.45],[.05,.27],[.13,.12]]};
+figures.blackjoseph={name:'Black Joseph',color:'#20bba6',skin:'#63452f',gi:'#19665e',head:[243,0,157,203],outline:[[.28,.02],[.65,0],[.88,.12],[.99,.3],[.88,.5],[.8,.65],[.78,.82],[.64,.97],[.41,1],[.22,.86],[.18,.67],[.09,.48],[0,.25],[.1,.09]]};
+figures.blackblaise={name:'Black Blaise',color:'#8555c8',skin:'#704b36',gi:'#322242',head:[568,48,363,397],outline:[[.4,0],[.68,.02],[.86,.12],[.96,.32],[.98,.55],[.91,.68],[.79,.69],[.78,.82],[.57,.98],[.31,.98],[.18,.86],[.16,.66],[.13,.58],[0,.4],[.1,.17]]};
 const portraits={};
-for(const [id,url] of [['bailey','bailey-original.jpg'],['alexjones','alex-jones-original.png']]){const image=new Image();image.src=url;portraits[id]=image;}
-const poster=new Image();poster.src='rnt-roster-original.jpg';
-const bodies=new Image();bodies.src='detailed-bodies-v1.png';
+for(const [id,url] of [['bailey','assets/bailey-original.jpg'],['alexjones','assets/alex-jones-original.png'],['blackjoseph','assets/black-joseph-original.jpg'],['blackblaise','assets/black-blaise-original.jpg']]){const image=new Image();image.src=url;portraits[id]=image;}
+const poster=new Image();poster.src='assets/rnt-roster-original.jpg';
+const bodies=new Image();bodies.src='assets/detailed-bodies-v1.png';
+const alexBody=new Image();alexBody.src='assets/alex-body-infowars.png';
 const bodyTiles=[];
-export const artReady=async()=>{await Promise.all([poster.decode(),bodies.decode(),...Object.values(portraits).map(p=>p.decode())]);
+export const artReady=async()=>{await Promise.all([poster.decode(),bodies.decode(),alexBody.decode(),...Object.values(portraits).map(p=>p.decode())]);
  for(let i=0;i<5;i++){const c=document.createElement('canvas');c.width=434;c.height=620;
  c.getContext('2d').drawImage(bodies,i*434,94,434,620,0,0,434,620);bodyTiles.push(c);}
  // Outfit variations tint only the colored fabric, preserving skin and detail.
  for(const [base,mode] of [[1,'gold'],[4,'charcoal']]){const c=document.createElement('canvas');c.width=434;c.height=620;const g=c.getContext('2d');g.drawImage(bodyTiles[base],0,0);const im=g.getImageData(0,0,434,620),d=im.data;
  for(let i=0;i<d.length;i+=4){const r=d[i],green=d[i+1],b=d[i+2];if(b>green*1.15&&b>r*.9){const light=Math.max(r,green,b);if(mode==='gold'){d[i]=light;d[i+1]=light*.73;d[i+2]=light*.22;}else{d[i]=light*.65;d[i+1]=light*.68;d[i+2]=light*.73;}}}g.putImageData(im,0,0);bodyTiles.push(c);}
+ // Original faces remain unchanged; body variants match the new portraits.
+ for(const base of [1,4]){const c=document.createElement('canvas');c.width=434;c.height=620;const g=c.getContext('2d');g.drawImage(bodyTiles[base],0,0);const im=g.getImageData(0,0,434,620),d=im.data;for(let i=0;i<d.length;i+=4){if(d[i]>d[i+1]*1.16&&d[i]>d[i+2]*1.22){d[i]*=.55;d[i+1]*=.50;d[i+2]*=.48;}}g.putImageData(im,0,0);bodyTiles.push(c);}
+ const c=document.createElement('canvas');c.width=434;c.height=620;const ag=c.getContext('2d');
+ const outline=[[.42,.01],[.53,.01],[.58,.05],[.66,.08],[.73,.12],[.77,.19],[.78,.14],[.83,.11],[.87,.12],[.9,.17],[.91,.24],[.89,.3],[.85,.33],[.79,.32],[.76,.29],[.73,.36],[.74,.42],[.81,.48],[.84,.58],[.85,.66],[.82,.76],[.86,.88],[.95,.93],[.98,.94],[.98,.97],[.72,.98],[.7,.95],[.72,.9],[.68,.83],[.65,.76],[.59,.7],[.53,.64],[.48,.58],[.43,.66],[.36,.72],[.29,.8],[.21,.87],[.19,.95],[.14,.99],[.02,.99],[.02,.96],[.06,.88],[.03,.84],[.09,.73],[.14,.65],[.16,.56],[.2,.48],[.25,.41],[.26,.34],[.25,.29],[.21,.31],[.15,.32],[.11,.29],[.11,.23],[.15,.17],[.16,.12],[.24,.07],[.34,.04]];
+ ag.beginPath();outline.forEach(([x,y],i)=>i?ag.lineTo(x*434,y*620):ag.moveTo(x*434,y*620));ag.closePath();ag.clip();ag.drawImage(alexBody,0,0,alexBody.width,alexBody.height,0,0,434,620);bodyTiles[6]=c;
 };
+export function setRosterNames(fighters){for(const f of fighters)if(figures[f.id])figures[f.id].name=f.name;}
 export function fighterArt(id){return figures[id]||figures.rnt;}
 export function drawRosterHead(g,id,x,y){
  const a=fighterArt(id),[sx,sy,sw,sh]=a.head;
@@ -36,7 +45,7 @@ export function drawRosterHead(g,id,x,y){
 }
 
 // Continuous textured mesh follows the existing combat poses; original heads remain separate.
-const ids=['rnt','tristan','andre','marcel','blaise','bailey','alexjones'];
+const ids=['rnt','tristan','andre','marcel','blaise','bailey','alexjones','blackjoseph','blackblaise'];
 function triangle(g,img,s,d){
  const [a,b,c]=s,[p,q,r]=d,ux=b[0]-a[0],uy=b[1]-a[1],vx=c[0]-a[0],vy=c[1]-a[1],det=ux*vy-uy*vx;
  const A=((q[0]-p[0])*vy-(r[0]-p[0])*uy)/det,B=((q[1]-p[1])*vy-(r[1]-p[1])*uy)/det;
@@ -53,7 +62,7 @@ export function drawRosterBody(g,id,S){
  const cols=10,rows=14,points=[],source=[];
  const top=S.hy+25+S.crouch*.15,hip=-58+S.crouch*.35;
  for(let j=0;j<=rows;j++)for(let i=0;i<=cols;i++){
-  const u=i/cols,v=j/rows;let x=(u-.5)*108+S.lean*.5*(1-v),y=v<.37?top+(hip-top)*v/.37:hip+(0-hip)*(v-.37)/.63;
+  const u=i/cols,v=j/rows;let x=(u-.5)*(id==='alexjones'?138:108)+S.lean*.5*(1-v),y=v<.37?top+(hip-top)*v/.37:hip+(0-hip)*(v-.37)/.63;
   const leg=Math.max(0,(v-.4)/.6),right=Math.min(1,Math.max(0,(u-.35)/.3));
   x+=leg*((1-right)*(S.lb[0]+18)+right*(S.lf[0]-16));
   y+=leg*((1-right)*(S.lb[1]+8)+right*(S.lf[1]+10));

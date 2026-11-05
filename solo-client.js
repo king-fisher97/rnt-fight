@@ -28,7 +28,7 @@ export class SoloRun {
 }
 export function createRntClient(){
  return {active:false,running:false,slot:0,recentHashes:{},step(){},async init(){
-  const {drawRosterHead,drawRosterBody,drawRosterPoseHead}=await import('./rnt-art.js?v=20261104-roster7');
+  const {drawRosterHead,drawRosterBody,drawRosterPoseHead,setRosterNames}=await import('./rnt-art.js?v=20261104-nine10');
   const tg=window.Telegram?.WebApp;
   tg?.ready();tg?.expand();
   if(tg?.isVersionAtLeast?.('7.7'))tg.disableVerticalSwipes();
@@ -36,9 +36,10 @@ export function createRntClient(){
    document.documentElement.style.setProperty('--tg-safe-top',(safe.top||0)+'px');
    document.documentElement.style.setProperty('--tg-safe-bottom',(safe.bottom||0)+'px');};
   updateSafe();tg?.onEvent('contentSafeAreaChanged',updateSafe);
-  const res=await fetch('./roster.json');if(!res.ok)throw new Error('Could not load roster');
+  const res=await fetch('./data/roster.json',{cache:'no-cache'});if(!res.ok)throw new Error('Could not load roster');
   const registry=await res.json(),select=document.getElementById('character'),buttons=document.querySelector('.roster-buttons');
-  const lineup=document.getElementById('rosterLineup'),g=lineup.getContext('2d');
+  setRosterNames(registry.fighters);
+  const lineup=document.getElementById('rosterLineup');lineup.width=registry.fighters.length*200;const g=lineup.getContext('2d');
   const pose={lean:0,crouch:0,fa:[16,-104,30,-96],ba:[-14,-102,-30,-92],lf:[16,-10],lb:[-18,-8],hy:-152};
   registry.fighters.forEach((fighter,i)=>{const x=i*200;g.save();g.beginPath();g.rect(x,0,200,510);g.clip();
    const gradient=g.createLinearGradient(x,0,x+200,510);gradient.addColorStop(0,fighter.color);gradient.addColorStop(1,'#100c17');g.fillStyle=gradient;g.fillRect(x,0,200,510);
@@ -46,7 +47,7 @@ export function createRntClient(){
    g.translate(x+100,440);g.scale(1.7,1.7);drawRosterBody(g,fighter.id,pose);drawRosterPoseHead(g,fighter.id,pose);g.restore();
    g.fillStyle='#fff';g.textAlign='center';g.font='bold 26px sans-serif';g.fillText(fighter.name.toUpperCase(),x+100,486,185);
    g.fillStyle='#090711';g.fillRect(x+198,0,2,510);
-  });g.fillStyle='#090711d9';g.fillRect(0,0,1400,64);g.fillStyle='#ffe6b7';g.font='bold italic 38px sans-serif';g.textAlign='center';g.fillText('SELECT YOUR FIGHTER',700,46);
+  });g.fillStyle='#090711d9';g.fillRect(0,0,lineup.width,64);g.fillStyle='#ffe6b7';g.font='bold italic 38px sans-serif';g.textAlign='center';g.fillText('SELECT YOUR FIGHTER',lineup.width/2,46);
   select.replaceChildren();buttons.replaceChildren();
   for(const fighter of registry.fighters){
    const o=document.createElement('option');o.value=fighter.id;o.textContent=fighter.name;select.append(o);

@@ -10,10 +10,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Neon Fist">
-<link rel="apple-touch-icon" href="icon-192.png">
-<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<link rel="stylesheet" href="rnt.css?v=20261104-menu9">
+<link rel="stylesheet" href="rnt.css?v=20261104-nine10">
 <style>
   :root{ --p1:#38f0d0; --p2:#ff5a7a; }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -164,7 +164,7 @@
       <p>On your phone: use the on-screen movement and attack buttons.</p>
     </section>
     <div class="mode-label">SOLO / FIVE-ROUND RUN</div>
-    <canvas id="rosterLineup" class="roster-art" width="1400" height="510" role="img" aria-label="All seven fighters: RNT, Tristan, Andre, Marcel, Blaise, Bailey, and Alex Jones"></canvas>
+    <canvas id="rosterLineup" class="roster-art" width="1400" height="510" role="img" aria-label="All nine fighters: RNT, Tristan, Andre, Marcel, Blaise, Bailey, Alex Jones, Black Joseph, and Black Blaise"></canvas>
     <div class="roster-buttons"><button data-fighter="rnt" aria-pressed="false">RNT</button><button data-fighter="tristan" aria-pressed="false">Tristan</button><button data-fighter="andre" aria-pressed="false">Andre</button><button data-fighter="marcel" aria-pressed="false">Marcel</button><button data-fighter="blaise" aria-pressed="false">Blaise</button></div>
     <p>Choose your fighter. Your original artwork appears in the arena.</p>
     <label for="character">Roster slot</label>
@@ -181,15 +181,15 @@
 </div>
 <script type="module">
 "use strict";
-import { SoloRun, difficulty, createRntClient } from "./solo-client.js?v=20261104-menu9";
-import { artReady, fighterArt, drawRosterHead, drawRosterBody, drawRosterPoseHead } from "./rnt-art.js?v=20261104-roster7";
+import { SoloRun, difficulty, createRntClient } from "./solo-client.js?v=20261104-nine10";
+import { artReady, fighterArt, drawRosterHead, drawRosterBody, drawRosterPoseHead } from "./rnt-art.js?v=20261104-nine10";
 /* Shared modules are the SAME files the server and test-suite import
    (public/shared/*.js), so validation rules can never drift between
    client and backend. */
 import { AssetLoader, validateFighter, validateRules, ConfigError }
-  from './configLoader.js';
+  from './shared/configLoader.js';
 import { auditFighterConfig, configFingerprint, hashGameState,
-         DesyncDetector, DesyncState } from './integrity.js';
+         DesyncDetector, DesyncState } from './shared/integrity.js';
 
 
 let CONFIG_FINGERPRINT = null;
@@ -526,18 +526,19 @@ function packAtlas(){
 const Audio5 = (()=>{
   let ac=null, master=null, sfxBus=null, musBus=null, buffers={}, ready=false, muted=false;
   let musSrc=null;
-  const victoryTrack=new Audio('victory-track.m4a');
+  const victoryTrack=new Audio('assets/victory-track.m4a');
   victoryTrack.preload='auto';
+  const alexVictory=new Audio('assets/alex-victory.m4a');alexVictory.preload='auto';
   let victoryTimer=null, victoryGain=null;
   function stopVictory(){
     clearTimeout(victoryTimer);
-    victoryTrack.pause(); victoryTrack.currentTime=0;
+    victoryTrack.pause(); victoryTrack.currentTime=0;alexVictory.pause();alexVictory.currentTime=0;
   }
-  function victory(){
+  function victory(characterId){
     if(!ready) return;
     stopVictory(); music(false);
-    victoryTrack.play().catch(()=>{});
-    victoryTimer=setTimeout(stopVictory,4000);
+    (characterId==='alexjones'?alexVictory:victoryTrack).play().catch(()=>{});
+    victoryTimer=setTimeout(stopVictory,7000);
   }
   const gainPool=[]; let poolMade=0;
 
@@ -548,6 +549,7 @@ const Audio5 = (()=>{
     victoryGain=ac.createGain(); victoryGain.gain.value=0.18;
     ac.createMediaElementSource(victoryTrack).connect(victoryGain);
     victoryGain.connect(master);
+    const screamGain=ac.createGain();screamGain.gain.value=.8;ac.createMediaElementSource(alexVictory).connect(screamGain);screamGain.connect(master);
     sfxBus = ac.createGain(); sfxBus.gain.value=0.85; sfxBus.connect(master);
     musBus = ac.createGain(); musBus.gain.value=0.34; musBus.connect(master);
     render();
@@ -1477,7 +1479,7 @@ const Game = {
 };
 
 const Run = new SoloRun();
-const ROSTER_IDS=['rnt','tristan','andre','marcel','blaise','bailey','alexjones'];
+const ROSTER_IDS=['rnt','tristan','andre','marcel','blaise','bailey','alexjones','blackjoseph','blackblaise'];
 const P1 = new Fighter(0, 330, PAL.p1, 'PLAYER 1');
 const P2 = new Fighter(1, 630, PAL.p2, 'CPU');
 const FIGHTERS=[P1,P2];
@@ -1584,7 +1586,8 @@ function updateFlow(){
       else {P1.rounds++;P2.rounds++;}
       UI.sync();
       const result=Run.resolve(w==='p1',P1.hp,Game.timer);
-      if(w==='p1') Audio5.victory();
+      if(w==='p1') Audio5.victory(P1.characterId);
+      else if(w==='p2'&&P2.characterId==='alexjones') Audio5.victory('alexjones');
       if(result.finished){
         Game.phase='matchEnd';Game.phaseT=0;
         UI.show(result.complete?'WINNER — RUN COMPLETE':'RUN OVER','SCORE '+Run.score+' · BEST '+Run.best+' · '+Run.wins+'/5 WINS');
@@ -1761,7 +1764,7 @@ const Net = {
 
 /* ============================ RENDERING ============================ */
 let bgCanvas=null, bgFar=null;
-const arenaImage=new Image();arenaImage.src='tate-arena-v3.png';
+const arenaImage=new Image();arenaImage.src='assets/tate-arena-v3.png';
 function buildBackground(){
   const c=document.createElement('canvas'); c.width=VW; c.height=VH;
   const g=c.getContext('2d');
@@ -1955,7 +1958,7 @@ document.getElementById('restartRun').onclick=rematchIfDone;
 document.getElementById('start').addEventListener('click',()=>{
   const selected=document.getElementById('character').value;
   P1.characterId=selected;P1.name=fighterArt(selected).name;
-  const ids=['rnt','tristan','andre','marcel','blaise','bailey','alexjones'];
+  const ids=['rnt','tristan','andre','marcel','blaise','bailey','alexjones','blackjoseph','blackblaise'];
   P2.characterId=ids[(ids.indexOf(selected)+1)%ids.length];P2.name=fighterArt(P2.characterId).name;
   document.getElementById('selectedMatch').textContent=P1.name+' VS '+P2.name;
   Audio5.init(); Audio5.resume();
@@ -1979,7 +1982,7 @@ async function boot(){
   };
   try{
     const loader = new AssetLoader({ base:'' }).onProgress(setP);
-    await loader.loadManifest('manifest.json');
+    await loader.loadManifest('data/manifest.json');
     await loader.loadData();
 
     // Phase 12: refuse to run obviously tampered balance data
